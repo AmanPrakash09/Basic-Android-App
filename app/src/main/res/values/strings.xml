@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">CPEN 321 M1</string>
+    <string name="title_activity_maps">MapsActivity</string>
+    <string name="maps_button_caption">My Favorite City</string>
+    <string name="details_button_caption">Phone Details</string>
+    <string name="sign_out_button_caption">Sign Out</string>
+</resources>
