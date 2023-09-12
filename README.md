@@ -18,12 +18,12 @@ manufacturer, and phone model.
 Login and Server Info
 - Opens the login screen of Google or Facebook to authenticate the user
 - Once the user is authenticated, it connects to the back-end and displays the following information:
-  o Server public IP address (either IPV4 or IPV6)
-  o Client IP address
-  o Server local time (hh:mm:ss)
-  o Client local time (hh:mm:ss)
-  o Your name, obtained via a back-end API (first, last)
-  o The name of the user logged into the app with their Google/Facebook credentials (first, last)
+  - Server public IP address (either IPV4 or IPV6)
+  - Client IP address
+  - Server local time (hh:mm:ss)
+  - Client local time (hh:mm:ss)
+  - Your name, obtained via a back-end API (first, last)
+  - The name of the user logged into the app with their Google/Facebook credentials (first, last)
 
 Camera and Details
 - (Yet to be implemented)
