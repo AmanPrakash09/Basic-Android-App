@@ -21,9 +21,9 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.view.textclassifier.TextLinks;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -39,6 +39,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.Enumeration;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
+
 public class MainActivity extends AppCompatActivity {
 
     final static String TAG = "MainActivity";
@@ -46,10 +54,9 @@ public class MainActivity extends AppCompatActivity {
     private Button detailsButton;
     private String cityGeo;
     private boolean locationUpdateReceived = false;
-    private Handler handler = new Handler();
-    private Runnable checkLocationUpdateRunnable;
     private GoogleSignInClient mGoogleSignInClient;
     private Button signOutButton;
+    String loggedIn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,89 +75,14 @@ public class MainActivity extends AppCompatActivity {
         });
 
         detailsButton = findViewById(R.id.details_button);
-//        detailsButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-////                checkLocationPermissions();
-//                Log.d(TAG, "Trying to request location permissions");
-////                Toast.makeText(MainActivity.this, "Trying to request location permissions", Toast.LENGTH_LONG).show();
-////                if (checkLocationPermissions()) {
-////                    getLocationInfo();
-////                    String city = cityGeo; // Get the city information
-////                    String manufacturer = android.os.Build.MANUFACTURER;
-////                    String model = android.os.Build.MODEL;
-////
-////                    // Create an Intent to launch DeviceInfoActivity
-////                    Intent phoneDetailsIntent = new Intent(MainActivity.this, DetailsActivity.class);
-////
-////                    // Pass the data as extras to DeviceInfoActivity
-////                    phoneDetailsIntent.putExtra("city", city);
-////                    phoneDetailsIntent.putExtra("manufacturer", manufacturer);
-////                    phoneDetailsIntent.putExtra("model", model);
-////
-////                    // Start DeviceInfoActivity
-////                    startActivity(phoneDetailsIntent);
-////                }
-//                if (checkLocationPermissions()) {
-//                    getLocationInfo();
-//                    if (locationUpdateReceived) {
-//                        String city = cityGeo; // Get the city information
-//                        String manufacturer = android.os.Build.MANUFACTURER;
-//                        String model = android.os.Build.MODEL;
-//
-//                        // Create an Intent to launch DeviceInfoActivity
-//                        Intent phoneDetailsIntent = new Intent(MainActivity.this, DetailsActivity.class);
-//
-//                        // Pass the data as extras to DeviceInfoActivity
-//                        phoneDetailsIntent.putExtra("city", city);
-//                        phoneDetailsIntent.putExtra("manufacturer", manufacturer);
-//                        phoneDetailsIntent.putExtra("model", model);
-//
-//                        // Start DeviceInfoActivity
-//                        startActivity(phoneDetailsIntent);
-//                    } else {
-//                        // If a valid update has not been received yet, inform the user
-//                        Toast.makeText(MainActivity.this, "Waiting for location update. Please try again.", Toast.LENGTH_SHORT).show();
-//                    }
-//                }
-//            }
-//        });
         detailsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (checkLocationPermissions()) {
+                if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                        && ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                     getLocationInfo();
-
-                    // Check location update status periodically
-                    checkLocationUpdateRunnable = new Runnable() {
-                        @Override
-                        public void run() {
-                            if (locationUpdateReceived) {
-                                handler.removeCallbacks(this); // Stop checking
-                                String city = cityGeo; // Get the city information
-                                String manufacturer = android.os.Build.MANUFACTURER;
-                                String model = android.os.Build.MODEL;
-
-                                // Create an Intent to launch DeviceInfoActivity
-                                Intent phoneDetailsIntent = new Intent(MainActivity.this, DetailsActivity.class);
-
-                                // Pass the data as extras to DeviceInfoActivity
-                                phoneDetailsIntent.putExtra("city", city);
-                                phoneDetailsIntent.putExtra("manufacturer", manufacturer);
-                                phoneDetailsIntent.putExtra("model", model);
-
-                                // Start DeviceInfoActivity
-                                startActivity(phoneDetailsIntent);
-                            } else {
-                                // Continue checking until location update is received
-                                Toast.makeText(MainActivity.this, "Loading location ...", Toast.LENGTH_SHORT).show();
-                                handler.postDelayed(this, 1000); // Check again after 1 second (adjust the delay as needed)
-                            }
-                        }
-                    };
-
-                    // Start checking location update
-                    handler.post(checkLocationUpdateRunnable);
+                } else {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 1);
                 }
             }
     });
@@ -167,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 signIn();
+//                startServerActivity();
             }
         });
 
@@ -178,6 +111,57 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void startDetailsActivity() {
+        String city = cityGeo;
+        String manufacturer = android.os.Build.MANUFACTURER;
+        String model = android.os.Build.MODEL;
+
+        Intent phoneDetailsIntent = new Intent(MainActivity.this, DetailsActivity.class);
+
+        phoneDetailsIntent.putExtra("city", city);
+        phoneDetailsIntent.putExtra("manufacturer", manufacturer);
+        phoneDetailsIntent.putExtra("model", model);
+
+        startActivity(phoneDetailsIntent);
+    }
+
+    private void startServerActivity() {
+        Intent serverInfoIntent = new Intent(MainActivity.this, ServerActivity.class);
+        serverInfoIntent.putExtra("clientIP", getLocalIpAddress());
+        serverInfoIntent.putExtra("clientName", loggedIn);
+        serverInfoIntent.putExtra("clientTime", getLocalTime());
+        startActivity(serverInfoIntent);
+    }
+
+    // from ChatGPT
+    private String getLocalIpAddress() {
+        try {
+            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+            while (networkInterfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = networkInterfaces.nextElement();
+                Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress address = addresses.nextElement();
+                    // Check if it's not the loopback address and is an IPv4 address
+                    if (!address.isLoopbackAddress() && address.getAddress().length == 4) {
+                        return address.getHostAddress();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // from ChatGPT
+    private String getLocalTime() {
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss a", Locale.getDefault());
+        sdf.setTimeZone(TimeZone.getDefault());
+        return sdf.format(new Date());
+    }
+
 
     private ActivityResultLauncher<Intent> signInLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -213,6 +197,7 @@ public class MainActivity extends AppCompatActivity {
 
             // Signed in successfully, show authenticated UI.
             updateUI(account);
+            startServerActivity();
         } catch (ApiException e) {
             // The ApiException status code indicates the detailed failure reason.
             // Please refer to the GoogleSignInStatusCodes class reference for more information.
@@ -239,42 +224,9 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "Email: " + account.getEmail());
             Log.d(TAG, "Given Name: " + account.getGivenName());
             Log.d(TAG, "Family Name: " + account.getFamilyName());
+            loggedIn = account.getDisplayName();
             Log.d(TAG, "Display URI: " + account.getPhotoUrl());
-
-            // Send token to your back-end
-            // Move to another activity
         }
-    }
-
-    private boolean checkLocationPermissions() {
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                && ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            return true;
-        } else {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
-                    || ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
-                new AlertDialog.Builder(this)
-                        .setTitle("Need Location Permissions")
-                        .setMessage("We need the location permissions to mark your location on a map")
-                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                dialogInterface.dismiss();
-                            }
-                        })
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-                            }
-                        })
-                        .create()
-                        .show();
-            } else {
-                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-            }
-        }
-        return false;
     }
 
     private void getLocationInfo() {
@@ -283,37 +235,45 @@ public class MainActivity extends AppCompatActivity {
             @SuppressLint("SetTextI18n")
             @Override
             public void onLocationChanged(Location location) {
-                // Get city information from the location
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
 
-                // You can use Geocoder to get city information from latitude and longitude
                 Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
 
                 try {
-                    // Get the city name from the latitude and longitude
                     List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
                     assert addresses != null;
                     if (!addresses.isEmpty()) {
                         cityGeo = addresses.get(0).getLocality();
-                        // Display the city name in the TextView
                         locationUpdateReceived = true;
+                        startDetailsActivity();
+                        locationManager.removeUpdates(this);
                     } else {
-                        // Handle the case where no address information is available
                         cityGeo = "Not Found";
                     }
                 } catch (IOException e) {
-                    // Handle Geocoder exceptions, such as network errors
                     e.printStackTrace();
                     cityGeo = "Error";
                 }
             }
-
-            // Implement other LocationListener methods if needed
         };
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == 1) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (!locationUpdateReceived) {
+                    getLocationInfo();
+                    locationUpdateReceived = true;
+                }
+            }
+        }
     }
 }
