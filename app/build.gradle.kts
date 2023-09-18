@@ -44,5 +44,6 @@ dependencies {
     implementation ("com.google.android.gms:play-services-auth:20.7.0")
     implementation ("com.squareup.okhttp3:okhttp:3.14.9")
     implementation ("com.google.code.gson:gson:2.8.9")
+    implementation ("pl.droidsonroids.gif:android-gif-drawable:1.2.27")
 
 }

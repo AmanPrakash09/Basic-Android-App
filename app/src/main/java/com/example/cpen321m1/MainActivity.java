@@ -5,14 +5,11 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -23,7 +20,6 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.textclassifier.TextLinks;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -53,10 +49,12 @@ public class MainActivity extends AppCompatActivity {
     private Button mapsButton;
     private Button detailsButton;
     private String cityGeo;
-    private boolean locationUpdateReceived = false;
+    private boolean locationPermissionGranted = false;
     private GoogleSignInClient mGoogleSignInClient;
     private Button signOutButton;
     String loggedIn;
+
+    private Button surpriseButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,14 +76,14 @@ public class MainActivity extends AppCompatActivity {
         detailsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                        && ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    getLocationInfo();
-                } else {
+                if (!locationPermissionGranted) {
+                    // not granted yet
                     ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+                } else {
+                    getLocationInfo();
                 }
             }
-    });
+        });
 
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
@@ -99,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 signIn();
-//                startServerActivity();
             }
         });
 
@@ -108,6 +105,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 signOut();
+            }
+        });
+
+        surpriseButton = findViewById(R.id.surprise_button);
+        surpriseButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d(TAG, "Trying to open Surpise Activity");
+
+                Intent surpriseIntent = new Intent(MainActivity.this, SurpriseActivity.class);
+                startActivity(surpriseIntent);
             }
         });
     }
@@ -218,8 +226,7 @@ public class MainActivity extends AppCompatActivity {
     private void updateUI(GoogleSignInAccount account) {
         if (account == null) {
             Log.d(TAG, "There is no user signed in!");
-        }
-        else {
+        } else {
             Log.d(TAG, "Pref Name: " + account.getDisplayName());
             Log.d(TAG, "Email: " + account.getEmail());
             Log.d(TAG, "Given Name: " + account.getGivenName());
@@ -229,38 +236,44 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Geocoder part is from ChatGPT
     private void getLocationInfo() {
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        LocationListener locationListener = new LocationListener() {
-            @SuppressLint("SetTextI18n")
-            @Override
-            public void onLocationChanged(Location location) {
-                double latitude = location.getLatitude();
-                double longitude = location.getLongitude();
+        if (locationPermissionGranted) {
+            LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            LocationListener locationListener = new LocationListener() {
+                @SuppressLint("SetTextI18n")
+                @Override
+                public void onLocationChanged(Location location) {
+                    double latitude = location.getLatitude();
+                    double longitude = location.getLongitude();
 
-                Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
+                    Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
 
-                try {
-                    List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
-                    assert addresses != null;
-                    if (!addresses.isEmpty()) {
-                        cityGeo = addresses.get(0).getLocality();
-                        locationUpdateReceived = true;
-                        startDetailsActivity();
-                        locationManager.removeUpdates(this);
-                    } else {
-                        cityGeo = "Not Found";
+                    try {
+                        List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+                        assert addresses != null;
+                        if (!addresses.isEmpty()) {
+                            cityGeo = addresses.get(0).getLocality();
+                        } else {
+                            cityGeo = "Not Found";
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        cityGeo = "Error";
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    cityGeo = "Error";
+                    startDetailsActivity();
+                    locationManager.removeUpdates(this);
                 }
+            };
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
             }
-        };
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+        } else {
+            // denied
+            cityGeo = "Please allow location permissions.";
+            startDetailsActivity();
         }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
     }
 
     @Override
@@ -269,10 +282,13 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == 1) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                if (!locationUpdateReceived) {
-                    getLocationInfo();
-                    locationUpdateReceived = true;
-                }
+                locationPermissionGranted = true;
+                getLocationInfo();
+            } else {
+                locationPermissionGranted = false;
+                // denied
+                cityGeo = "Please allow location permissions.";
+                startDetailsActivity();
             }
         }
     }

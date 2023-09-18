@@ -4,4 +4,15 @@
     <string name="maps_button_caption">My Favorite City</string>
     <string name="details_button_caption">Phone Details</string>
     <string name="sign_out_button_caption">Sign Out</string>
+    <string name="surprise_button_caption">Surprise</string>
+    <string name="postDB_button_caption">Screenshot + Post to DB</string>
+    <string name="getDB_button_caption">Get From DB + Send</string>
+    <string name="death_button_caption">💀</string>
+    <string name="to_text_caption">To: </string>
+    <string name="to_hint_text_caption">Type who you want to send to</string>
+    <string name="subject_text_caption">Subject: </string>
+    <string name="subject_hint_text_caption">Type a heading</string>
+    <string name="message_text_caption">Message: </string>
+    <string name="message_hint_text_caption">Type your email</string>
+    <string name="send_button_caption">Send</string>
 </resources>

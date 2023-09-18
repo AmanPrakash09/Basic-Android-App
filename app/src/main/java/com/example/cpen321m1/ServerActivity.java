@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
@@ -60,6 +59,8 @@ public class ServerActivity extends AppCompatActivity {
         startServerActivity(clientName);
     }
 
+    // Source: https://youtu.be/oGWJ8xD2W6k?si=plXluHkyTvQ2cVet
+
     @SuppressLint("SetTextI18n")
     private void startServerActivity(String clientName) {
         OkHttpClient client = new OkHttpClient();
@@ -92,7 +93,6 @@ public class ServerActivity extends AppCompatActivity {
                             serverIP = jsonObject.get("IPAddress").getAsString();
                             serverIPTextView.setText("Server IP Address: " + serverIP);
                             Log.d(TAG, "Server IP Address: " + serverIP);
-//                            serverInfoIntent.putExtra("IP", serverIP);
                         } else {
                             Log.d(TAG, "Server IP Address not found in JSON response");
                         }
@@ -131,7 +131,6 @@ public class ServerActivity extends AppCompatActivity {
                             serverTime = jsonObject.get("serverTime").getAsString();
                             serverTimeTextView.setText("Server Local Time: " + serverTime);
                             Log.d(TAG, "Server Time: " + serverTime);
-//                            serverInfoIntent.putExtra("time", serverTime);
                         } else {
                             Log.d(TAG, "Server Time not found in JSON response");
                         }
@@ -170,7 +169,6 @@ public class ServerActivity extends AppCompatActivity {
                             fullName = jsonObject.get("fullName").getAsString();
                             myNameTextView.setText("My Name: " + fullName);
                             Log.d(TAG, "Full Name: " + fullName);
-//                            serverInfoIntent.putExtra("name", fullName);
                         } else {
                             Log.d(TAG, "Full Name not found in JSON response");
                         }
