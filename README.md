@@ -11,12 +11,12 @@ additional clicks or gestures.
 
 Phone Details
 - Displays on the screen the name of the city where the phone is located, phone
-manufacturer, and phone model.
-  o On a real device, the phone manufacturer and model could be “Google” and “Pixel 3”.
-  o On an emulator, it could be: “Google” and “Android SDK built for X86”.
+manufacturer, and phone model
+  - On a real device, the phone manufacturer and model could be “Google” and “Pixel 3”
+  - On an emulator, it could be: “Google” and “Android SDK built for X86”
 
 Login and Server Info
-- Opens the login screen of Google or Facebook to authenticate the user
+- Opens the login screen of Google to authenticate the user
 - Once the user is authenticated, it connects to the back-end and displays the following information:
   - Server public IP address (either IPV4 or IPV6)
   - Client IP address
@@ -30,9 +30,9 @@ Camera and Details
 
 Back-end Server Specifications (Yet to be implemented)
 - The back-end is implemented in Node.js
-  o Uses MongoDB as database
-- Hosted on a cloud infrastructure
-- On the server, create three APIs, to return
+- Uses MongoDB as a database
+- Hosted on AWS EC2 Virtual Machine
+- The server has three APIs to return
   1. Server IP address
   2. Server local time, when the API is called (hh:mm:ss)
   3. Your first and last name
