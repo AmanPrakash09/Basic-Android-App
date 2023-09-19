@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private Button detailsButton;
     private String cityGeo;
     private boolean locationPermissionGranted = false;
+    private boolean isDetailsActivityRunning = false;
     private GoogleSignInClient mGoogleSignInClient;
     private Button signOutButton;
     String loggedIn;
@@ -80,7 +81,9 @@ public class MainActivity extends AppCompatActivity {
                     // not granted yet
                     ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 1);
                 } else {
-                    getLocationInfo();
+                    if (!isDetailsActivityRunning) {
+                        getLocationInfo();
+                    }
                 }
             }
         });
@@ -121,17 +124,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startDetailsActivity() {
-        String city = cityGeo;
-        String manufacturer = android.os.Build.MANUFACTURER;
-        String model = android.os.Build.MODEL;
+        if (!isDetailsActivityRunning) {
+            isDetailsActivityRunning = true;
+            String city = cityGeo;
+            String manufacturer = android.os.Build.MANUFACTURER;
+            String model = android.os.Build.MODEL;
 
-        Intent phoneDetailsIntent = new Intent(MainActivity.this, DetailsActivity.class);
+            Intent phoneDetailsIntent = new Intent(MainActivity.this, DetailsActivity.class);
 
-        phoneDetailsIntent.putExtra("city", city);
-        phoneDetailsIntent.putExtra("manufacturer", manufacturer);
-        phoneDetailsIntent.putExtra("model", model);
+            phoneDetailsIntent.putExtra("city", city);
+            phoneDetailsIntent.putExtra("manufacturer", manufacturer);
+            phoneDetailsIntent.putExtra("model", model);
 
-        startActivity(phoneDetailsIntent);
+            startActivity(phoneDetailsIntent);
+        }
     }
 
     private void startServerActivity() {
@@ -291,5 +297,11 @@ public class MainActivity extends AppCompatActivity {
                 startDetailsActivity();
             }
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        isDetailsActivityRunning = false; // Reset the flag when the MainActivity is stopped
     }
 }
