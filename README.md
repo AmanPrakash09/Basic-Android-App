@@ -25,14 +25,20 @@ Login and Server Info
   - Your name, obtained via a back-end API (first, last)
   - The name of the user logged into the app with their Google/Facebook credentials (first, last)
 
-Camera and Details
-- (Yet to be implemented)
+Wizard Animation, Screenshots, and Email
+- User can control a sprite by pressing buttons, making it perform several actions
+- User has option to press a button that takes a screenshot and sends data to MongoDB database
+  - The screenshot is saved as a Bitmap that is then encoded to a string
+- User has option to press another button that collects all the "screenshots" from the database. An email is also sent to recipient(s) of the user's choice on how many "screenshots" are on the database along with the action the sprite performed last
+  - The strings collected from the database are converted back to Bitmaps that can be displayed on the screen
 
-Back-end Server Specifications (Yet to be implemented)
+Back-end Server Specifications
 - The back-end is implemented in Node.js
 - Uses MongoDB as a database
 - Hosted on AWS EC2 Virtual Machine
-- The server has three APIs to return
-  1. Server IP address
-  2. Server local time, when the API is called (hh:mm:ss)
-  3. Your first and last name
+- Included API endpoints that
+  1. return server IP address
+  2. return server local time, when the API is called (hh:mm:ss)
+  3. return my first and last name
+  4. post encoded strings of Bitmaps to a MongoDB database
+  5. return all data on the same MongoDB database
